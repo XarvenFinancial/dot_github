@@ -1,0 +1,78 @@
+name: Build and Push Docker Image to ECR
+
+on:
+  workflow_call:
+    inputs:
+      aws-role-arn:
+        required: true
+        type: string
+      working-directory:
+        required: false
+        type: string
+        default: '.'
+      aws-region:
+        required: false
+        type: string
+        default: 'ap-northeast-1'
+      ecr-registry:
+        required: false
+        type: string
+        default: '211125421782.dkr.ecr.ap-northeast-1.amazonaws.com'
+      ecr-repository:
+        required: true
+        type: string
+      image-tag:
+        required: false
+        type: string
+        default: 'latest'
+      push:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  build-and-push:
+    name: Docker Build and Push
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write 
+
+    steps:
+      - name: Sanitize string into valid Docker tag
+        id: sanitize_tag
+        run: |
+          tag=$(echo "${{ inputs.image-tag }}" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E 's/[^a-z0-9._-]+/-/g' \
+            | sed -E 's/^[._-]+//' \
+            | cut -c1-128)
+
+          echo "${{ inputs.image-tag }} -> $tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.aws-role-arn }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: Build Docker image
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          docker build -t ${{ inputs.ecr-registry }}/${{ inputs.ecr-repository }}:${{ steps.sanitize_tag.outputs.tag }} .
+
+      - name: Log in to Amazon ECR
+        if: ${{ inputs.push }}
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push Docker image to ECR
+        if: ${{ inputs.push }}
+        run: |
+          docker push ${{ inputs.ecr-registry }}/${{ inputs.ecr-repository }}:${{ steps.sanitize_tag.outputs.tag }}
+          

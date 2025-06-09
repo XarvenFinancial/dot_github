@@ -1,0 +1,24 @@
+name: Generate Semantic Version
+
+on:
+  workflow_call:
+    outputs:
+      version-string:
+        description: "The calculated semantic version"
+        value: ${{ jobs.semantic-version.outputs.version-string }}
+
+jobs:
+  semantic-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version-string: ${{ steps.version.outputs.version-string }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required to read commit history
+
+      - name: Get next version
+        id: version
+        uses: bitshifted/git-auto-semver@v2
+        
