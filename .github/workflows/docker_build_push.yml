@@ -29,6 +29,10 @@ on:
         required: false
         type: boolean
         default: true
+    outputs:
+      image-tag:
+        description: "The transformed image tag"
+        value: ${{ jobs.sanitize_tag.outputs.tag }}
 
 jobs:
   build-and-push:
