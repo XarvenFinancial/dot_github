@@ -25,6 +25,10 @@ on:
         required: false
         type: string
         default: '1.12.1'
+      tf-vars-json:
+        required: false
+        type: string
+        default: ''
   
 permissions:
   id-token: write
@@ -38,6 +42,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Write tfvars file (if provided)
+        if: inputs.tf-vars-json != ''
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo '${{ inputs.tf-vars-json }}' > terraform.tfvars.json
+          cat terraform.tfvars.json | jq '.'
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
