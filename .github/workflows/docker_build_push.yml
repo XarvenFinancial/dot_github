@@ -38,6 +38,8 @@ jobs:
   build-and-push:
     name: Docker Build and Push
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.sanitize_tag.outputs.tag }}
 
     permissions:
       contents: read
