@@ -32,7 +32,7 @@ on:
     outputs:
       image-tag:
         description: "The transformed image tag"
-        value: ${{ jobs.sanitize_tag.outputs.tag }}
+        value: ${{ jobs.build-and-push.outputs.tag }}
 
 jobs:
   build-and-push:
